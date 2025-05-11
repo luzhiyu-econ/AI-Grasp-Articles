@@ -1,0 +1,16 @@
+# Google Gemini API客户端
+google-genai>=0.1.0
+
+# HTTP请求库
+requests>=2.31.0
+
+# HTML解析库
+beautifulsoup4>=4.12.0
+
+# 进度条显示
+tqdm>=4.66.0
+
+# 可选依赖
+python-dotenv>=1.0.0  # 用于环境变量管理
+urllib3>=2.0.0       # URL处理
+pathlib>=1.0.1       # 路径处理
