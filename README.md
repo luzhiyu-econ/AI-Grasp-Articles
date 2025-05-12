@@ -1,4 +1,4 @@
-# AI Grasp Articles
+# JournalFetcher
 
 基于Google Gemini的智能学术论文抓取工具，可以自动检索和下载指定期刊的文章。
 
