@@ -100,8 +100,11 @@ JSON 格式应该如下：
         return {"error": "Invalid JSON response", "raw_response": full_response}, full_response, journal_name, journal_issue
 
 def find_article_links(journal_data_str):
+    # 获取API密钥
+    api_key = get_api_key()
+    
     client = genai.Client(
-        api_key=os.getenv("GEMINI_API_KEY"),
+        api_key=api_key,
     )
 
     model = "gemini-2.5-flash-preview-04-17"
