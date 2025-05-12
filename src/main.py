@@ -24,7 +24,7 @@ def get_api_key():
 
 def generate_journal_articles():
     # 获取用户输入
-    journal_name = input("请输入期刊名称 (默认: journal of political economy): ") or "journal of political economy"
+    journal_name = input("请输入期刊名称 (默认: Journal of Political Economy): ") or "Journal of Political Economy"
     journal_issue = input("请输入期刊年份和期数 (默认: 2025年第四期): ") or "2025年第四期"
     
     # 构建查询文本
@@ -42,7 +42,9 @@ def generate_journal_articles():
         types.Content(
             role="user",
             parts=[
-                types.Part.from_text(text="""为我检索journal of political economy 2025年第四期包含哪些文章，并以json格式返回，包含 article_title 和 author 两项。
+                types.Part.from_text(text=f"""请按照以下要求检索文章信息：
+{query_text}
+
 请确保 article_title 是文章的完整标题。
 请确保 author 是文章的主要作者或所有作者列表（如果可以获取）。
 JSON 格式应该如下：
@@ -59,7 +61,6 @@ JSON 格式应该如下：
   ]
 }}
 请严格按照此JSON结构返回，不要添加任何额外的解释性文字在JSON本身之外。直接开始JSON输出。"""),
-                types.Part.from_text(text=query_text),
             ],
         ),
     ]
@@ -235,7 +236,7 @@ def download_paper(url, title, author, journal_name, journal_issue, directory):
 
 def process_and_download_papers(articles_json, links_json, journal_name, journal_issue, download_dir="downloads"):
     """处理文章列表和下载相应的论文"""
-    print("\n\n=== Journal of Political Economy 2025年第四期文章列表及论文链接 ===\n")
+    print("\n\n=== 文章列表及论文链接 ===\n")
     
     articles = articles_json.get("articles", [])
     article_links = links_json.get("article_links", [])
@@ -278,6 +279,60 @@ def process_and_download_papers(articles_json, links_json, journal_name, journal
     available_links = sum(1 for link in links_map.values() if link != "Not found")
     print(f"\n总结: 共有{len(articles)}篇文章，找到了{available_links}篇的工作论文链接，成功下载了{success_count}篇")
 
+def generate_markdown_table(articles_json, links_json, journal_name, journal_issue):
+    """生成包含文章信息的Markdown表格"""
+    articles = articles_json.get("articles", [])
+    article_links = links_json.get("article_links", [])
+    
+    # 创建文章标题到链接的映射表
+    links_map = {item["article_name"]: item["working_paper_link"] for item in article_links}
+    
+    # 构建Markdown表格
+    markdown_content = f"# {journal_name} {journal_issue} 文章列表\n\n"
+    markdown_content += "| 标题 | 作者 | 论文链接 |\n"
+    markdown_content += "|------|------|----------|\n"
+    
+    for article in articles:
+        title = article.get("article_title", "Unknown title")
+        author = article.get("author", "Unknown author")
+        
+        # 查找最匹配的链接
+        link = None
+        for link_title, link_url in links_map.items():
+            if title == link_title:
+                link = link_url
+                break
+        
+        if not link:
+            # 如果没找到精确匹配，尝试部分匹配
+            for link_title, link_url in links_map.items():
+                if title in link_title or link_title in title:
+                    link = link_url
+                    break
+        
+        if not link:
+            link = "Not found"
+            
+        # 转义Markdown特殊字符
+        title = title.replace("|", "\\|")
+        author = author.replace("|", "\\|")
+        
+        # 添加表格行
+        markdown_content += f"| {title} | {author} | {link} |\n"
+    
+    # 保存到文件
+    journal_folder = sanitize_filename(journal_name)
+    issue_folder = sanitize_filename(journal_issue)
+    save_dir = Path("downloads") / journal_folder / issue_folder
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    filepath = save_dir / "articles_table.md"
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(markdown_content)
+    
+    print(f"\n文章信息表格已保存到: {filepath}")
+    return filepath
+
 if __name__ == "__main__":
     # 获取期刊文章列表
     result_json, json_str, journal_name, journal_issue = generate_journal_articles()
@@ -288,3 +343,6 @@ if __name__ == "__main__":
     
     # 处理结果并下载论文
     process_and_download_papers(result_json, links_json, journal_name, journal_issue)
+    
+    # 生成并保存Markdown表格
+    generate_markdown_table(result_json, links_json, journal_name, journal_issue)
