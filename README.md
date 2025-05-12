@@ -25,7 +25,7 @@ python src/main.py
 ```
 
 2. 按提示输入：
-   - 期刊名称（默认为：journal of political economy）
+   - 期刊名称（默认为：Journal of Political Economy）
    - 期刊年份和期数（默认为：2025年第四期）
 
 3. 程序会自动：
