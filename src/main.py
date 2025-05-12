@@ -160,12 +160,15 @@ Please begin your JSON output now."""
 
 def sanitize_filename(name):
     """清理文件名，移除不允许的字符"""
-    # 替换不允许在文件名中使用的字符
+    # 替换不允许在文件名中使用的字符（Windows、Linux、macOS 通用）
     name = re.sub(r'[\\/*?:"<>|]', "", name)
+    # 去除开头和结尾的点号（Windows 不允许）
+    name = name.strip('.')
     # 去除多余的空格
     name = re.sub(r'\s+', " ", name).strip()
-    # 限制长度
-    if len(name) > 150:
+    # 限制长度（考虑不同操作系统的限制）
+    # Windows 路径最大长度为 260 字符，macOS 和 Linux 为 255 字符
+    if len(name) > 150:  # 留出足够空间给路径前缀
         name = name[:147] + "..."
     return name
 
@@ -180,7 +183,15 @@ def download_paper(url, title, author, journal_name, journal_issue, directory):
         journal_folder = sanitize_filename(journal_name)
         issue_folder = sanitize_filename(journal_issue)
         save_dir = Path(directory) / journal_folder / issue_folder
-        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            save_dir.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            print(f"错误：没有权限创建目录 {save_dir}")
+            return False
+        except OSError as e:
+            print(f"创建目录时出错：{e}")
+            return False
         
         # 构建文件名
         filename = sanitize_filename(f"{title} - {author} - {journal_name} {journal_issue}")
@@ -237,6 +248,10 @@ def download_paper(url, title, author, journal_name, journal_issue, directory):
 def process_and_download_papers(articles_json, links_json, journal_name, journal_issue, download_dir="downloads"):
     """处理文章列表和下载相应的论文"""
     print("\n\n=== 文章列表及论文链接 ===\n")
+    
+    # 确保下载目录使用绝对路径
+    download_dir = Path(download_dir).resolve()
+    print(f"下载目录: {download_dir}")
     
     articles = articles_json.get("articles", [])
     article_links = links_json.get("article_links", [])
