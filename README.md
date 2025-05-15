@@ -6,7 +6,7 @@
 
 An intelligent academic paper fetching tool based on Google Gemini, capable of automatically retrieving and downloading articles from specified journals.
 
-[English](README.md) | [中文](README_ch.md)
+[English](README.md) | [中文](README_zh.md)
 
 ## ✨ Features
 
